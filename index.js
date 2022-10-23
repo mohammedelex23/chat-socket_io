@@ -67,6 +67,6 @@ app.get("/chat", function (req, res, next) {
   }
 });
 
-server.listen(5000, function () {
+server.listen(process.env.PORT || 5000, function () {
   console.log("Server is listening on port: 5000");
 });
