@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="./chat.css" />
+    <title>Node Socket</title>
+  </head>
+  <body>
+    <!-- container -->
+    <!-- conatins three columns: 1-Name 2-form & messages 3-online users -->
+    <div class="container">
+      <!-- Name column -->
+      <div class="name">
+        <h2>Your Name</h2>
+        <p id="user_name"></p>
+      </div>
+
+      <!-- Form & messages column -->
+      <div class="form_column">
+        <!-- Display user is writing -->
+        <ul id="typing_users"></ul>
+
+        <!-- Messages -->
+        <ul id="messages"></ul>
+
+        <!-- form -->
+        <form id="form" class="form" action="">
+          <input id="input" type="text" />
+          <button>Send</button>
+        </form>
+      </div>
+
+      <!-- Online users column -->
+      <div class="users">
+        <h2>Online users</h2>
+        <ul id="users"></ul>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+
+      var form = document.getElementById("form");
+      let user_name = document.getElementById("user_name");
+      let users = document.getElementById("users");
+      let input = document.getElementById("input");
+      let typing_users = document.getElementById("typing_users");
+      let messages = document.getElementById("messages");
+
+      const urlSearchParams = new URLSearchParams(window.location.search);
+      const params = Object.fromEntries(urlSearchParams.entries());
+      user_name.innerText = params.name;
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (input.value) {
+          let user = {
+            name: user_name.innerText,
+            message: input.value,
+          };
+          let li = document.createElement("li");
+
+          let h2 = document.createElement("h2");
+          let p = document.createElement("p");
+          h2.textContent = user_name.innerText;
+          p.textContent = input.value;
+          li.setAttribute("id", "user_message");
+          li.className = "user_message";
+          li.append(h2, p);
+          messages.appendChild(li);
+          messages.scrollTo(0, document.body.scrollHeight);
+          socket.emit("user not typing", user_name.innerText);
+          socket.emit("message", user);
+          input.value = "";
+        }
+      });
+
+      socket.emit("new user", params.name);
+
+      socket.on("new user", (onlineUsers) => {
+        const availableUsers = [...users.children].map(
+          (node) => node.innerText
+        );
+        console.log(onlineUsers);
+        for (let i = 0; i < onlineUsers.length; i++) {
+          if (
+            onlineUsers[i].name === user_name.innerText ||
+            availableUsers.includes(onlineUsers[i].name)
+          ) {
+            continue;
+          }
+          var item = document.createElement("li");
+          item.setAttribute("id", onlineUsers[i].id);
+          item.textContent = onlineUsers[i].name;
+          users.appendChild(item);
+        }
+
+        users.scrollTo(0, document.body.scrollHeight);
+      });
+
+      socket.on("user disconnect", (id) => {
+        let user = document.getElementById(id);
+        if (user) {
+          user.remove();
+        }
+      });
+
+      socket.on("user typing", function (user) {
+        if (!document.getElementById(user.id)) {
+          let item = document.createElement("li");
+          item.textContent = `${user.name} is typing...`;
+          item.setAttribute("id", user.id);
+          typing_users.appendChild(item);
+          users.scrollTo(0, document.body.scrollHeight);
+        }
+      });
+
+      socket.on("user not typing", function (user) {
+        let item = document.getElementById(user.id);
+        if (item) {
+          item.remove();
+        }
+      });
+
+      socket.on("message", function (user) {
+        let li = document.createElement("li");
+
+        let h2 = document.createElement("h2");
+        let p = document.createElement("p");
+        h2.textContent = user.name;
+        p.textContent = user.message;
+        li.setAttribute("id", user.id);
+        li.append(h2, p);
+        messages.appendChild(li);
+
+        messages.scrollTo(0, document.body.scrollHeight);
+      });
+
+      input.addEventListener("keydown", function (e) {
+        socket.emit("user typing", user_name.innerText);
+      });
+      let timer = null;
+      input.addEventListener("keyup", function (e) {
+        if (timer) {
+          clearTimeout(timer);
+        }
+        timer = setTimeout(() => {
+          socket.emit("user not typing", user_name.innerText);
+        }, 1000);
+      });
+      input.addEventListener("blur", function (e) {
+        socket.emit("user not typing", user_name.innerText);
+      });
+    </script>
+  </body>
+</html>

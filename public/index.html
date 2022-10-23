@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./index.css" />
+    <title>Node Socket</title>
+  </head>
+  <body>
+    <div class="container">
+      <form id="form" action="/chat">
+        <h3>Your name</h3>
+        <input id="input" required type="text" />
+        <div><button type="submit">Login</button></div>
+      </form>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+      let form = document.getElementById("form");
+      let input = document.getElementById("input");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!input.value || (input.value && !input.value.trim())) {
+          alert("please enter your name");
+        } else {
+          window.location.replace(`/chat?name=${input.value}`);
+        }
+      });
+    </script>
+  </body>
+</html>
