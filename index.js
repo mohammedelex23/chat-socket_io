@@ -15,10 +15,11 @@ app.get("/", (req, res) => {
 let users = [];
 
 io.on("connection", (socket) => {
-  console.log("a user connected", socket.id);
   socket.on("disconnect", () => {
+    console.log("before", users);
     users = users.filter((user) => user.id != socket.id);
-    socket.broadcast.emit("user disconnect", socket.id);
+    console.log("after", users);
+    socket.broadcast.emit("user disconnect", `${socket.id}user`);
   });
 
   socket.on("message", async (user) => {
@@ -26,10 +27,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("new user", (name) => {
-    console.log("new user", name);
-    console.log("user id", socket.id);
-
-    users.push({ name, id: socket.id });
+    users.push({ name, id: `${socket.id}user` });
     // socket.broadcast.emit("new user", users);
     io.emit("new user", users);
   });
