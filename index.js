@@ -16,9 +16,7 @@ let users = [];
 
 io.on("connection", (socket) => {
   socket.on("disconnect", () => {
-    console.log("before", users);
     users = users.filter((user) => user.id != socket.id);
-    console.log("after", users);
     socket.broadcast.emit("user disconnect", `${socket.id}user`);
   });
 
